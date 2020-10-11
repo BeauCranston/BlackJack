@@ -3,14 +3,16 @@ import java.util.ArrayList;
 public class Player {
     private String playerName;
     private ArrayList<Card> hand;
+    private boolean isDealer;
 
-
-    public Player(String playerName){
+    public Player(String playerName, boolean isDealer){
         this.playerName = playerName;
+        this.isDealer = isDealer;
     }
-    public Player(String playerName, ArrayList<Card> hand){
+    public Player(String playerName, ArrayList<Card> hand, boolean isDealer){
         this.playerName = playerName;
         this.hand = hand;
+        this.isDealer = isDealer;
     }
 
     public void hit(Card cardDealt){
@@ -18,17 +20,31 @@ public class Player {
     }
 
     public String showHand(){
-        String playerHandString = "";
+        StringBuilder sb = new StringBuilder();
+        sb.append(playerName + "'s Hand: ");
         int count = 0;
-        for(Card card : this.hand){
-            playerHandString.concat(card.getName());
+        if(this.isDealer != true){
+            for(Card card : this.hand){
+                sb.append(card.getName());
 
-            if(count < this.hand.size() - 1){
-                playerHandString.concat(", ");
+                if(count < this.hand.size() - 1){
+                    sb.append(", ");
+                }
+                count ++;
             }
-            count ++;
         }
-        return playerHandString;
+        else{
+            sb.append(this.hand.get(0));
+            for(int i = 1; i < this.hand.size(); i++){
+                sb.append('x');
+
+                if(count < this.hand.size() - 1){
+                    sb.append(", ");
+                }
+            }
+        }
+
+        return sb.toString();
     }
     public int calculateHandValue(){
         int handValue = 0;

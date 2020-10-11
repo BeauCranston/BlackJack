@@ -22,7 +22,7 @@ public class SkeletonClient
             System.out.println("Server says " + in.readUTF());
             while(!typing.equals("exit")){
                 typing = keyboard.nextLine();
-                out.writeUTF("pooopy doopy");
+                out.writeUTF(typing);
                 try{
                     Thread.sleep(1000);
                 }catch(InterruptedException ie){

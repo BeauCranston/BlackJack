@@ -4,16 +4,18 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class SkeletonServer extends Thread {
 
     private Socket server;
-    private static ServerSocket serverSocket;
     private DataInputStream in;
     private DataOutputStream out;
+    private Socket[] players = new Socket[10];
     private static int currentClientCount = 0;
     private static BlackJackGame bj = new BlackJackGame();
+
     public SkeletonServer(Socket theSocket) throws IOException {
         server = theSocket;
     }
@@ -25,27 +27,29 @@ public class SkeletonServer extends Thread {
         boolean gameStarted = false;
         try {
             System.out.println("Just connected to " + server.getRemoteSocketAddress());
-
+            bj.addPlayer(server.getPort());
             currentClientCount ++;
-            if(gameStarted == false){
-                System.out.println("there are now " + currentClientCount + " connected");
-                if(currentClientCount == 2){
-                    gameStarted = true;
-                }
-            }
-
+            System.out.println("there are now " + currentClientCount + " connected");
             in = new DataInputStream(server.getInputStream());
             out = new DataOutputStream(server.getOutputStream());
+
             /* Echo back whatever the client writes until the client exits. */
             while (!line.equals("exit")) {
                 if (in.available() > 0) {
-                    System.out.println(in.readUTF()  );
-                    out.writeUTF("you are such a gay");
+                    if(in.readUTF() == "hi"){
+                        bj.advanceTurn();
+                    }
+                    out.writeUTF(in.readUTF());
                 }
             }
             out.close();
             in.close();
             server.close();
+
+
+
+
+
 
         } catch (SocketTimeoutException s) {
             System.out.println("Socket timed out!");
@@ -59,42 +63,41 @@ public class SkeletonServer extends Thread {
     }
 
     public static void main(String[] args) throws IOException {
-        Socket clientConnection;
-        int port = 5005;
-        serverSocket = new ServerSocket(port);
-        // Need a way to close the server without just killing it.
-        while (true) {
-            System.out.println("Waiting for client on port "
-                    + serverSocket.getLocalPort() + "...");
-            System.out.println("Minimum of " + (Integer.parseInt(args[0]) - currentClientCount) + " clients needed to play");
-
-            Thread clientAcceptanceThread = new AcceptClients();
-              //blocking
-            try {
-                Thread t = new SkeletonServer(clientConnection);
-                t.start();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        startServer(Integer.parseInt(args[0]));
     }
-    static class AcceptClients extends Thread{
-        public Socket clientSocket;
-        public AcceptClients(Socket clientSocket){
-            this.clientSocket = clientSocket;
-        }
 
+    /**
+     *  A method that listens for new connections on the listen thread but calling the listen runnable variable. When a new user connects the method will place that new connection on a separate thread
+     *  and open up the line of communication
+     * @param minUserCount
+     */
+    public static void startServer(int minUserCount){
+        Runnable listen = new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    int port = 5005;
+                    ServerSocket serverSocket = new ServerSocket(port);
+                    // Need a way to close the server without just killing it.
+                    while (true) {
+                        System.out.println("Waiting for client on port" + serverSocket.getLocalPort() + "...");
+                        Socket clientConnection = serverSocket.accept();
+                        Thread t = new SkeletonServer(clientConnection);
+                        t.start();
+                    }
+                } catch (IOException e) {
+                        e.printStackTrace();
+                }
 
-        @Override
-        public void run() {
-            try {
-                this.clientSocket = serverSocket.accept();
-            } catch (IOException e) {
-                e.printStackTrace();
             }
+        };
+        Thread listenThread = new Thread(listen);
+        listenThread.start();
 
-        }
+
     }
+
+
 
 }
 

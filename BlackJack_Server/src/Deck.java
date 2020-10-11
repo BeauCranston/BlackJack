@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.Collections;
 
 public class Deck {
     private ArrayList<Card> deck;
@@ -9,14 +10,13 @@ public class Deck {
     public Deck(){
         this.deck = new ArrayList<>();
 
-
     }
 
-    public void readFromFile(){
+    public void readFromFile(String fileName){
 
         String row = "";
         try {
-            BufferedReader csvReader = new BufferedReader(new FileReader("cards.txt"));
+            BufferedReader csvReader = new BufferedReader(new FileReader(fileName));
 
             while ((row = csvReader.readLine()) != null) {
                 String[] data = row.split(",");
@@ -30,6 +30,11 @@ public class Deck {
         }
 
     }
+
+    public void shuffle(){
+        Collections.shuffle(this.deck);
+    }
+
 
 
 }
