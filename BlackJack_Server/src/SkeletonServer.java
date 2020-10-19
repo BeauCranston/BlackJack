@@ -12,10 +12,10 @@ public class SkeletonServer extends Thread {
     private Socket server;
     private DataInputStream in;
     private DataOutputStream out;
-    private Socket[] players = new Socket[10];
+    private static ArrayList<Integer> players = new ArrayList<>();
     private static int currentClientCount = 0;
-    private static BlackJackGame bj = new BlackJackGame();
-
+    private static BlackJackGame bj = new BlackJackGame("src/cards.txt");
+    private static Object lock = new Object();
     public SkeletonServer(Socket theSocket) throws IOException {
         server = theSocket;
     }
@@ -27,33 +27,48 @@ public class SkeletonServer extends Thread {
         boolean gameStarted = false;
         try {
             System.out.println("Just connected to " + server.getRemoteSocketAddress());
-            bj.addPlayer(server.getPort());
+            players.add(server.getPort());
             currentClientCount ++;
             System.out.println("there are now " + currentClientCount + " connected");
             in = new DataInputStream(server.getInputStream());
             out = new DataOutputStream(server.getOutputStream());
+            System.out.println(server.getPort());
 
             /* Echo back whatever the client writes until the client exits. */
+            boolean turn = false;
             while (!line.equals("exit")) {
-                if (in.available() > 0) {
-                    if(in.readUTF() == "hi"){
-                        bj.advanceTurn();
+                synchronized (lock){
+                    if(players.get(0) == server.getPort()){
+                        if (in.available() > 0) {
+
+                            out.writeUTF("not your turn");
+                            lock.wait();
+                        }
                     }
-                    out.writeUTF(in.readUTF());
+                    else{
+                        if (in.available() > 0) {
+
+                            out.writeUTF(in.readUTF());
+                            if(in.readUTF() == "done"){
+                                lock.notify();
+                            }
+                        }
+                    }
                 }
+
+
+
             }
             out.close();
             in.close();
             server.close();
 
 
-
-
-
-
         } catch (SocketTimeoutException s) {
             System.out.println("Socket timed out!");
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
                 //out.writeUTF("Thank you for connecting to " + server.getLocalSocketAddress() + "\nGoodbye!");

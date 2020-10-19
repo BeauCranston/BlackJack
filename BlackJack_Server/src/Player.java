@@ -8,6 +8,7 @@ public class Player {
     public Player(String playerName, boolean isDealer){
         this.playerName = playerName;
         this.isDealer = isDealer;
+        this.hand = new ArrayList<>();
     }
     public Player(String playerName, ArrayList<Card> hand, boolean isDealer){
         this.playerName = playerName;
@@ -15,35 +16,38 @@ public class Player {
         this.isDealer = isDealer;
     }
 
+    public String getName(){
+        return playerName;
+    };
+
+
     public void hit(Card cardDealt){
         hand.add(cardDealt);
     }
 
     public String showHand(){
         StringBuilder sb = new StringBuilder();
-        sb.append(playerName + "'s Hand: ");
         int count = 0;
-        if(this.isDealer != true){
-            for(Card card : this.hand){
-                sb.append(card.getName());
+        for(Card card : this.hand){
+            sb.append(card.getName());
 
-                if(count < this.hand.size() - 1){
-                    sb.append(", ");
-                }
-                count ++;
+            if(count < this.hand.size() - 1){
+                sb.append(", ");
             }
+            count ++;
         }
-        else{
-            sb.append(this.hand.get(0));
-            for(int i = 1; i < this.hand.size(); i++){
-                sb.append('x');
-
-                if(count < this.hand.size() - 1){
-                    sb.append(", ");
-                }
+        return sb.toString();
+    }
+    public String showFirstOnly(){
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        sb.append(this.hand.get(0).getName());
+        for(int i = 1; i < this.hand.size(); i++){
+            if(count < this.hand.size() - 1){
+                sb.append(", ");
             }
+            sb.append('X');
         }
-
         return sb.toString();
     }
     public int calculateHandValue(){
@@ -52,14 +56,34 @@ public class Player {
             handValue += card.getValue(card.getName());
 
         }
+        if(handValue > 21){
+            handValue = -1;
+        }
         return handValue;
     }
 
+    public void setHand(Card[] cards){
+        for(Card card : cards){
+            this.hand.add(card);
+        }
+
+    }
+
+    public boolean isDealer(){
+        return this.isDealer;
+    }
+
+    public ArrayList<Card> returnCards(){
+        ArrayList<Card> userHand = this.hand;
+        this.hand.clear();
+        return userHand;
+    }
 
     @Override
     public String toString(){
-        return playerName + ": " + " hand: " + showHand() + " Hand Value: " + calculateHandValue();
+        return playerName + ": " + " Hand: " + showHand() + " Hand Value: " + calculateHandValue();
     }
 
 
 }
+

@@ -18,7 +18,15 @@ public class Card {
             }
         }
         else{
-             return Integer.parseInt(String.valueOf(name.charAt(0)));
+
+            if(name.contains("10")){
+                return 10;
+            }
+            else{
+                return Integer.parseInt(String.valueOf(name.charAt(0)));
+            }
+
+
         }
     }
 
@@ -36,8 +44,9 @@ public class Card {
     }
     @Override
     public String toString(){
-        return getName() + " value: " +getValue(getName());
+        return getName() + " value: " + getValue(getName());
     }
 
 
 }
+
