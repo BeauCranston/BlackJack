@@ -12,9 +12,8 @@ public class SkeletonServer extends Thread {
     private DataInputStream in;
     private DataOutputStream out;
     private static int currentConnections;
-    private static BlackJackGame2 bj;
+    private static volatile BlackJackGame2 bj;
     private static final Object lock1 = new Object();
-    private static int currentTurn = 0;
     private Player thePlayer;
 
     public SkeletonServer(Socket theSocket) throws IOException {
@@ -31,51 +30,43 @@ public class SkeletonServer extends Thread {
         }
 
     }
-    public static void updateTurn(){
-        if(currentTurn < bj.getPlayersInGame().size()){
-            currentTurn++;
-        }
-        else{
-            currentTurn = 0;
-        }
-
-    }
 
     public void run() {
         String line = "start";
-        synchronized (lock1){
-            if(currentTurn != id){
-                try {
-                    lock1.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            else{
-                bj.addPlayer(id);
-                thePlayer = bj.getPlayerById(id);
-                bj.initializeHand(id);
-                id++;
-                System.out.println(bj.getPlayersString());
-                lock1.notify();
-                if(thePlayer.getId() == bj.getPlayersInGame().size() -1){
-                    bj.setState(GameState.DealingCards);
-                    bj.initializeDealer();
-                }
-                updateTurn();
-            }
+        thePlayer = bj.getPlayerById(id);
+        id++;
+        System.out.println(bj.getCurrentTurn());
+        while(bj.getState() != GameState.GameStarted){
 
         }
         try {
             System.out.println("Just connected to " + server.getRemoteSocketAddress());
             in = new DataInputStream(server.getInputStream());
             out = new DataOutputStream(server.getOutputStream());
-            System.out.println(in.readUTF());
+            BlackJackProtocol bjProtocol = new BlackJackProtocol(thePlayer, bj,in, out);
+            System.out.println("about to hit input loop?");
             /* Echo back whatever the client writes until the client exits. */
             while (!line.equals("exit")) {
-                if(thePlayer.getId() == currentTurn){
-                    out.writeUTF(thePlayer.showHand());
+                synchronized (lock1){
+                    System.out.println("hit synchronized block");
+                    if(thePlayer.getId() == bj.getCurrentTurn()){
+                        System.out.println("...im in");
+                        System.out.println("line: " + line);
+                        bjProtocol.acceptInput(line, bj.getState());
+                        bj.updateTurn();
+                        System.out.println("after " + thePlayer.getName() + "'s turn: " + bj.getCurrentTurn());
+                        lock1.notify();
+                    }
+                    else{
+                        System.out.println("in else");
+                        try {
+                            lock1.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
+
             }
             updateConnectionCount(false);
             out.close();
@@ -95,29 +86,58 @@ public class SkeletonServer extends Thread {
 
     public static void main(String[] args) throws IOException {
         currentConnections = 0;
+        int maxConnections = Integer.parseInt(args[0]);
         int port = 7777;
         ServerSocket serverSocket = new ServerSocket(port);
         System.out.println("Waiting for client on port "
                 + serverSocket.getLocalPort() + "...");
-        bj = new BlackJackGame2("cards.txt");
+        bj = new BlackJackGame2("cards.txt",maxConnections);
+        bj.setState(GameState.Initializing);
         // Need a way to close the server without just killing it.
-        while (currentConnections < 2) {
-            bj.setState(GameState.Initializing);
+        while (currentConnections < maxConnections) {
+
             Socket connectionToClient = serverSocket.accept(); //blocking
             try {
                 Thread t = new SkeletonServer(connectionToClient);
                 t.start();
-
                 updateConnectionCount(true);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        bj.setState(GameState.GameStarted);
+        while(bj.getState() != GameState.GameEnd){
+            if(bj.getCurrentTurn() == bj.getDealer().getId()){
+                if(bj.getState() == GameState.GameStarted){
+                    bj.setState(GameState.DealingCards);
+                    bj.updateTurn();
+                }
+                else if(bj.getState() == GameState.DealingCards){
+                    synchronized (lock1){
+                        System.out.println("dealing card to dealer..");
+                        bj.getDealer().hit(bj.dealCard());
+                        System.out.println("dealers hand: " + bj.getDealer().showHand());
+                        if(bj.getDealer().numOfCards() == 2){
+                            bj.setState(GameState.PlayerTurn);
+                            System.out.println(bj.getState());
+                            bj.updateTurn();
+
+                        }
+                        else{
+                            bj.updateTurn();
+                            System.out.println("after dealers turn: " + bj.getCurrentTurn());
+                        }
+
+                        lock1.notifyAll();
+                    }
+                }
+
+
+            }
+        }
+
+
         System.out.println(bj.getState());
-
-
-
-
         System.out.println("Game Has Started");
     }
 

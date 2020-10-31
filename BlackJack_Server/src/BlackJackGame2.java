@@ -2,6 +2,7 @@ import java.util.ArrayList;
 
 enum GameState {
     Initializing,
+    GameStarted,
     DealingCards,
     PlayerTurn,
     DealerTurn,
@@ -11,25 +12,39 @@ enum GameState {
 
 public class BlackJackGame2 {
     private Player dealer;
-    private ArrayList<Player> playersInGame;
+    private Player[] playersInGame;
     private GameState state;
     public Deck cardDeck;
-
-    public BlackJackGame2(String fileName){
+    private int currentTurn;
+    public BlackJackGame2(String fileName, int maxPlayers){
         this.cardDeck = new Deck(fileName);
-        this.dealer = new Player("Dealer", true);
-        this.playersInGame = new ArrayList<>();
-
-
+        this.playersInGame = new Player[maxPlayers + 1];
+        this.dealer = new Player(maxPlayers,"dealer", true);
+        for(int i = 0; i < playersInGame.length - 1; i++){
+            playersInGame[i] = new Player(i);
+        }
+        this.playersInGame[playersInGame.length - 1] = this.dealer;
+        currentTurn = 0;
+    }
+    public void updateTurn(){
+        if(currentTurn < playersInGame.length - 1){
+            currentTurn++;
+        }
+        else{
+            currentTurn = 0;
+        }
+    }
+    public int getCurrentTurn(){
+        return currentTurn;
     }
 
     public Player getDealer(){
         return this.dealer;
     }
+
     public void initializeDealer(){
         this.dealer.hit(cardDeck.removeFromDeck());
         this.dealer.hit(cardDeck.removeFromDeck());
-        playersInGame.add(dealer);
     }
     public void setState(GameState state){
         this.state = state;
@@ -39,17 +54,18 @@ public class BlackJackGame2 {
         return this.state;
     }
 
-    public void addPlayer(Player player){
-        playersInGame.add(player);
-    }
-
-    public void addPlayer(int id){
-        playersInGame.add(new Player(id,false));
-    }
+//    public void addPlayer(Player player){
+//        playersInGame.add(player);
+//    }
+//
+//    public void addPlayer(int id){
+//        playersInGame.add(new Player(id,false));
+//    }
 
     public Card dealCard(){
         return cardDeck.removeFromDeck();
     }
+
     public void initializeHand(int id){
         for(Player player : playersInGame){
             if(player.getId() == id){
@@ -79,16 +95,11 @@ public class BlackJackGame2 {
         return null;
     }
     public Player getPlayerById(int id){
-        for(Player player : playersInGame){
-            if(player.getId() == id) {
-                System.out.println("getting player id: " + id);
-                return player;
-            }
-        }
-        return null;
+
+        return playersInGame[id];
     }
 
-    public ArrayList<Player> getPlayersInGame(){
+    public Player[] getPlayersInGame(){
         return this.playersInGame;
     }
 

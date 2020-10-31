@@ -6,21 +6,17 @@ public class Player {
     private ArrayList<Card> hand;
     private boolean isDealer;
 
-    public Player(String playerName, boolean isDealer){
+    public Player(int id, String playerName, boolean isDealer){
+        this.id = id;
         this.playerName = playerName;
         this.isDealer = isDealer;
         this.hand = new ArrayList<>();
     }
-    public Player(int id, boolean isDealer){
+    public Player(int id){
         this.id = id;
         this.playerName = "player" + id;
-        this.isDealer = isDealer;
+        this.isDealer = false;
         this.hand = new ArrayList<>();
-    }
-    public Player(String playerName, ArrayList<Card> hand, boolean isDealer){
-        this.playerName = playerName;
-        this.hand = hand;
-        this.isDealer = isDealer;
     }
 
     public int getId(){return this.id;}
@@ -78,11 +74,15 @@ public class Player {
 
     }
 
+    public int numOfCards(){
+        return hand.size();
+    }
+
     public boolean isDealer(){
         return this.isDealer;
     }
 
-    public ArrayList<Card> returnCards(){
+    public ArrayList<Card> returnCardsToDeck(){
         ArrayList<Card> userHand = this.hand;
         this.hand.clear();
         return userHand;
@@ -90,7 +90,13 @@ public class Player {
 
     @Override
     public String toString(){
-        return playerName + ": " + " Hand: " + showHand() + " Hand Value: " + calculateHandValue();
+        if(isDealer == false){
+            return playerName + ": " + " Hand: " + showHand() + " Hand Value: " + calculateHandValue();
+        }
+        else{
+            return playerName + ": " + " Hand: " + showFirstOnly();
+        }
+
     }
 
 }

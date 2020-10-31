@@ -19,8 +19,14 @@ public class SkeletonClient
             out.writeUTF("Hello from " + client.getLocalSocketAddress());
             InputStream inFromServer = client.getInputStream();
             DataInputStream in = new DataInputStream(inFromServer);
-            System.out.println("Server says " + in.readUTF());
+            String line = in.readUTF();
+            while(line.equals("0") == false){
+                line = in.readUTF();
+                System.out.println("Server says " + line);
+            }
+
             while(!typing.equals("exit")){
+                System.out.println("Type hit ot stay");
                 typing = keyboard.nextLine();
                 out.writeUTF(typing);
                 try{
