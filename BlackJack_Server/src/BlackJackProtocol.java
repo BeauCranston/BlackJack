@@ -71,6 +71,9 @@ public class BlackJackProtocol {
                         }
                     }
                 }
+            }
+            else if(bj.getState() == GameState.GameEnd){
+                out.writeUTF(bj.displayResults());
 
             }
 

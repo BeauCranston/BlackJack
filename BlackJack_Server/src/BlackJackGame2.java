@@ -16,6 +16,7 @@ public class BlackJackGame2 {
     private GameState state;
     public Deck cardDeck;
     private int currentTurn;
+
     public BlackJackGame2(String fileName, int maxPlayers){
         this.cardDeck = new Deck(fileName);
         this.playersInGame = new Player[maxPlayers + 1];
@@ -54,13 +55,6 @@ public class BlackJackGame2 {
         return this.state;
     }
 
-//    public void addPlayer(Player player){
-//        playersInGame.add(player);
-//    }
-//
-//    public void addPlayer(int id){
-//        playersInGame.add(new Player(id,false));
-//    }
 
     public Card dealCard(){
         return cardDeck.removeFromDeck();
@@ -99,8 +93,50 @@ public class BlackJackGame2 {
         return playersInGame[id];
     }
 
+    public void executeDealerTurn(){
+        while(dealer.calculateHandValue()  != -1){
+            if(dealer.calculateHandValue() < 17) {
+                dealer.hit(cardDeck.removeFromDeck());
+            }
+            else {
+                System.out.println("Dealer stays");
+                break;
+            }
+
+        }
+        System.out.println("Dealers turn ends");
+
+    }
+
     public Player[] getPlayersInGame(){
         return this.playersInGame;
+    }
+
+    public String displayResults(){
+        StringBuilder results = new StringBuilder();
+        results.append("\nResults: \n==================== \n");
+        for(int i = 0; i < playersInGame.length - 1; i++){
+            results.append(playersInGame[i].toString() + "\n");
+        }
+        Player dealer = playersInGame[playersInGame.length - 1];
+        results.append("Dealers Hand: " + dealer.showHand() + " Dealers Value: " + dealer.calculateHandValue());
+        results.append("\n" + determineWinner());
+
+        return results.toString();
+
+    }
+    public String determineWinner(){
+        String playerName = "";
+        int highestScore = 0;
+        for(int i = 0; i < playersInGame.length; i++){
+            int playerScore = playersInGame[i].calculateHandValue();
+            if(highestScore < playerScore){
+                highestScore = playerScore;
+                playerName = playersInGame[i].getName();
+            }
+
+        }
+        return playerName + " Wins!!";
     }
 
 }

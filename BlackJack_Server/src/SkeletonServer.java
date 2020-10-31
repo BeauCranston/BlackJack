@@ -44,14 +44,14 @@ public class SkeletonServer extends Thread {
             in = new DataInputStream(server.getInputStream());
             out = new DataOutputStream(server.getOutputStream());
             BlackJackProtocol bjProtocol = new BlackJackProtocol(thePlayer, bj,in, out);
-            System.out.println("about to hit input loop?");
+            //System.out.println("about to hit input loop?");
             /* Echo back whatever the client writes until the client exits. */
             while (!line.equals("exit")) {
                 synchronized (lock1){
-                    System.out.println("hit synchronized block");
+                    //System.out.println("hit synchronized block");
                     if(thePlayer.getId() == bj.getCurrentTurn()){
-                        System.out.println("...im in");
-                        System.out.println("line: " + line);
+                        //System.out.println("...im in");
+                        //System.out.println("line: " + line);
                         bjProtocol.acceptInput(line, bj.getState());
                         bj.updateTurn();
                         System.out.println("after " + thePlayer.getName() + "'s turn: " + bj.getCurrentTurn());
@@ -120,25 +120,27 @@ public class SkeletonServer extends Thread {
                         if(bj.getDealer().numOfCards() == 2){
                             bj.setState(GameState.PlayerTurn);
                             System.out.println(bj.getState());
-                            bj.updateTurn();
-
                         }
-                        else{
-                            bj.updateTurn();
-                            System.out.println("after dealers turn: " + bj.getCurrentTurn());
-                        }
+                        bj.updateTurn();
 
                         lock1.notifyAll();
                     }
+                }
+                else if(bj.getState() == GameState.PlayerTurn){
+                    synchronized (lock1){
+                        bj.executeDealerTurn();
+                        System.out.println(bj.displayResults());
+                        bj.setState(GameState.GameEnd);
+                        bj.updateTurn();
+                        lock1.notifyAll();
+                    }
+
                 }
 
 
             }
         }
-
-
         System.out.println(bj.getState());
-        System.out.println("Game Has Started");
     }
 
 }

@@ -24,9 +24,8 @@ public class SkeletonClient
                 line = in.readUTF();
                 System.out.println("Server says " + line);
             }
-
+            System.out.println("Type hit or stay");
             while(!typing.equals("exit")){
-                System.out.println("Type hit ot stay");
                 typing = keyboard.nextLine();
                 out.writeUTF(typing);
                 try{
@@ -37,6 +36,15 @@ public class SkeletonClient
                 if(in.available() > 0){
                     System.out.println("Server replies " + in.readUTF());
                 }
+                else{
+                    System.out.println("Turn Finished");
+                    typing = "exit";
+                }
+            }
+            System.out.println("outside input loop");
+            while(line.contains("Results:") == false){
+                line = in.readUTF();
+                System.out.println("Server says " + line);
             }
             out.writeUTF("exit");
             out.close();
