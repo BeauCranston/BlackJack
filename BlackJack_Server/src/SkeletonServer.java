@@ -5,6 +5,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 
+/**
+ *  a class that steps through the game of black jack with multiple clients concurrently
+ */
 public class SkeletonServer extends Thread {
 
     private Socket server;
@@ -21,6 +24,10 @@ public class SkeletonServer extends Thread {
 
     }
 
+    /**
+     * a method to update the connection count up or down
+     * @param isIncrement
+     */
     public static void updateConnectionCount(boolean isIncrement){
         if(isIncrement == true){
             currentConnections++;
@@ -33,9 +40,12 @@ public class SkeletonServer extends Thread {
 
     public void run() {
         String line = "start";
+        // assign the player from the static black jack game object which holds the players that were instantiated.
         thePlayer = bj.getPlayerById(id);
+        //increment id so that every time that the run() method runs it is someone with a new id
         id++;
-        System.out.println(bj.getCurrentTurn());
+        //System.out.println(bj.getCurrentTurn());
+        //keep the thread in a loop until the game is started, this code is probably not needed but i am scared to remove it
         while(bj.getState() != GameState.GameStarted){
 
         }
@@ -43,6 +53,7 @@ public class SkeletonServer extends Thread {
             System.out.println("Just connected to " + server.getRemoteSocketAddress());
             in = new DataInputStream(server.getInputStream());
             out = new DataOutputStream(server.getOutputStream());
+            //instantiate a BlackJackProtocol class so that the 
             BlackJackProtocol bjProtocol = new BlackJackProtocol(thePlayer, bj,in, out);
             //System.out.println("about to hit input loop?");
             /* Echo back whatever the client writes until the client exits. */
