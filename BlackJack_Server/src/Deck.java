@@ -25,6 +25,7 @@ public class Deck {
                     cards.push(new Card(data[i]));
 
                 }
+
             }
             csvReader.close();
             System.out.println(cards.toString());

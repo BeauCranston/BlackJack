@@ -20,18 +20,16 @@ public class SkeletonClient
             InputStream inFromServer = client.getInputStream();
             DataInputStream in = new DataInputStream(inFromServer);
             System.out.println("Server says " + in.readUTF());
-            if(in.readUTF().equals("Now it is your turn")){
-                while(!typing.equals("exit")){
-                    typing = keyboard.nextLine();
-                    out.writeUTF(typing);
-                    try{
-                        Thread.sleep(1000);
-                    }catch(InterruptedException ie){
-                        System.err.print(ie);
-                    }
-                    if(in.available() > 0){
-                        System.out.println("Server replies " + in.readUTF());
-                    }
+            while(!typing.equals("exit")){
+                typing = keyboard.nextLine();
+                out.writeUTF(typing);
+                try{
+                    Thread.sleep(1000);
+                }catch(InterruptedException ie){
+                    System.err.print(ie);
+                }
+                if(in.available() > 0){
+                    System.out.println("Server replies " + in.readUTF());
                 }
             }
             out.writeUTF("exit");
@@ -44,4 +42,3 @@ public class SkeletonClient
         }
     }
 }
-

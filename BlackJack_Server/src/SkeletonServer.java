@@ -4,115 +4,123 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.Scanner;
 
 public class SkeletonServer extends Thread {
 
     private Socket server;
+    private static int id = 0;
     private DataInputStream in;
     private DataOutputStream out;
-    private static ArrayList<Integer> players = new ArrayList<>();
-    private static int currentClientCount = 0;
-    private static BlackJackGame bj = new BlackJackGame("src/cards.txt");
-    private static Object lock = new Object();
+    private static int currentConnections;
+    private static BlackJackGame2 bj;
+    private static final Object lock1 = new Object();
+    private static int currentTurn = 0;
+    private Player thePlayer;
+
     public SkeletonServer(Socket theSocket) throws IOException {
         server = theSocket;
+
     }
 
+    public static void updateConnectionCount(boolean isIncrement){
+        if(isIncrement == true){
+            currentConnections++;
+        }
+        else {
+            currentConnections--;
+        }
+
+    }
+    public static void updateTurn(){
+        if(currentTurn < bj.getPlayersInGame().size()){
+            currentTurn++;
+        }
+        else{
+            currentTurn = 0;
+        }
+
+    }
 
     public void run() {
         String line = "start";
+        synchronized (lock1){
+            if(currentTurn != id){
+                try {
+                    lock1.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            else{
+                bj.addPlayer(id);
+                thePlayer = bj.getPlayerById(id);
+                bj.initializeHand(id);
+                id++;
+                System.out.println(bj.getPlayersString());
+                lock1.notify();
+                if(thePlayer.getId() == bj.getPlayersInGame().size() -1){
+                    bj.setState(GameState.DealingCards);
+                    bj.initializeDealer();
+                }
+                updateTurn();
+            }
 
-        boolean gameStarted = false;
+        }
         try {
             System.out.println("Just connected to " + server.getRemoteSocketAddress());
-            players.add(server.getPort());
-            currentClientCount ++;
-            System.out.println("there are now " + currentClientCount + " connected");
             in = new DataInputStream(server.getInputStream());
             out = new DataOutputStream(server.getOutputStream());
-            System.out.println(server.getPort());
-
+            System.out.println(in.readUTF());
             /* Echo back whatever the client writes until the client exits. */
-            boolean turn = false;
             while (!line.equals("exit")) {
-                synchronized (lock){
-                    if(players.get(0) == server.getPort()){
-                        if (in.available() > 0) {
-
-                            out.writeUTF("not your turn");
-                            lock.wait();
-                        }
-                    }
-                    else{
-                        if (in.available() > 0) {
-
-                            out.writeUTF(in.readUTF());
-                            if(in.readUTF() == "done"){
-                                lock.notify();
-                            }
-                        }
-                    }
+                if(thePlayer.getId() == currentTurn){
+                    out.writeUTF(thePlayer.showHand());
                 }
-
-
-
             }
+            updateConnectionCount(false);
             out.close();
             in.close();
             server.close();
-
 
         } catch (SocketTimeoutException s) {
             System.out.println("Socket timed out!");
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         } finally {
-                //out.writeUTF("Thank you for connecting to " + server.getLocalSocketAddress() + "\nGoodbye!");
+            //out.writeUTF("Thank you for connecting to " + server.getLocalSocketAddress() + "\nGoodbye!");
 
         }
 
     }
 
     public static void main(String[] args) throws IOException {
-        startServer(Integer.parseInt(args[0]));
-    }
+        currentConnections = 0;
+        int port = 7777;
+        ServerSocket serverSocket = new ServerSocket(port);
+        System.out.println("Waiting for client on port "
+                + serverSocket.getLocalPort() + "...");
+        bj = new BlackJackGame2("cards.txt");
+        // Need a way to close the server without just killing it.
+        while (currentConnections < 2) {
+            bj.setState(GameState.Initializing);
+            Socket connectionToClient = serverSocket.accept(); //blocking
+            try {
+                Thread t = new SkeletonServer(connectionToClient);
+                t.start();
 
-    /**
-     *  A method that listens for new connections on the listen thread but calling the listen runnable variable. When a new user connects the method will place that new connection on a separate thread
-     *  and open up the line of communication
-     * @param minUserCount
-     */
-    public static void startServer(int minUserCount){
-        Runnable listen = new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    int port = 5005;
-                    ServerSocket serverSocket = new ServerSocket(port);
-                    // Need a way to close the server without just killing it.
-                    while (true) {
-                        System.out.println("Waiting for client on port" + serverSocket.getLocalPort() + "...");
-                        Socket clientConnection = serverSocket.accept();
-                        Thread t = new SkeletonServer(clientConnection);
-                        t.start();
-                    }
-                } catch (IOException e) {
-                        e.printStackTrace();
-                }
-
+                updateConnectionCount(true);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        };
-        Thread listenThread = new Thread(listen);
-        listenThread.start();
+        }
+        System.out.println(bj.getState());
 
 
+
+
+        System.out.println("Game Has Started");
     }
-
-
 
 }
+
 

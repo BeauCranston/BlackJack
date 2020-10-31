@@ -2,11 +2,18 @@ import java.util.ArrayList;
 
 public class Player {
     private String playerName;
+    private int id;
     private ArrayList<Card> hand;
     private boolean isDealer;
 
     public Player(String playerName, boolean isDealer){
         this.playerName = playerName;
+        this.isDealer = isDealer;
+        this.hand = new ArrayList<>();
+    }
+    public Player(int id, boolean isDealer){
+        this.id = id;
+        this.playerName = "player" + id;
         this.isDealer = isDealer;
         this.hand = new ArrayList<>();
     }
@@ -16,8 +23,10 @@ public class Player {
         this.isDealer = isDealer;
     }
 
+    public int getId(){return this.id;}
+
     public String getName(){
-        return playerName;
+        return this.playerName;
     };
 
 
@@ -83,7 +92,6 @@ public class Player {
     public String toString(){
         return playerName + ": " + " Hand: " + showHand() + " Hand Value: " + calculateHandValue();
     }
-
 
 }
 

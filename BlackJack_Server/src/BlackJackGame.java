@@ -9,12 +9,22 @@ public class BlackJackGame {
     private ArrayList<Player> playersInGame;
     private String gameState;
     private Player currentPlayer;
+    private GameState state;
     public Deck cardDeck;
+
     public BlackJackGame(String fileName){
         this.cardDeck = new Deck(fileName);
         this.playersInGame = new ArrayList<>();
         this.dealer = new Player("Dealer", true);
-        this.gameState = "not started";
+
+    }
+
+    public void setState(GameState state){
+        this.state = state;
+    }
+
+    public GameState getState(){
+        return this.state;
     }
 
     public void playGame(){
@@ -118,6 +128,10 @@ public class BlackJackGame {
         }
 
 
+    }
+
+    public void dealCard(Player player){
+        player.hit(cardDeck.removeFromDeck());
     }
 
     public void playerTurn(Player player){
@@ -228,6 +242,8 @@ public class BlackJackGame {
             cardDeck.returnHandToDeck(player.returnCards());
         }
     }
+
+
 
 
 
