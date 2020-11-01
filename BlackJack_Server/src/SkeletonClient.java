@@ -20,11 +20,14 @@ public class SkeletonClient
             InputStream inFromServer = client.getInputStream();
             DataInputStream in = new DataInputStream(inFromServer);
             String line = in.readUTF();
+            //if user input is not needed yet just wait for server messages
+            //when server sends a 0 the  server is ready to receive user input
             while(line.equals("0") == false){
                 line = in.readUTF();
                 System.out.println("Server says " + line);
             }
             System.out.println("Type hit or stay");
+            //handle user input and send it to the server
             while(!typing.equals("exit")){
                 typing = keyboard.nextLine();
                 out.writeUTF(typing);
@@ -42,6 +45,7 @@ public class SkeletonClient
                 }
             }
             System.out.println("outside input loop");
+            //when input is done get the results from the server
             while(line.contains("Results:") == false){
                 line = in.readUTF();
                 System.out.println("Server says " + line);
